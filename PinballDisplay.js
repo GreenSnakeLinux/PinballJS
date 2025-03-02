@@ -4,7 +4,7 @@ class PinballDisplay {
         this.scrollSpeed = scrollSpeed / 1000;  // Speed in milliseconds
         this.currentText = "";           // Current text to display
         this.position = 0;              // Scroll position
-        this.intervalId = null;         // For animation control
+        //this.intervalId = null;         // For animation control
         this.isRunning = false;
         this.textToDraw = "";
         this.scrollTimer = 0;
@@ -16,7 +16,7 @@ class PinballDisplay {
     // Start the display with given text
     start(text) {
         this.currentText = text.toUpperCase();
-        this.position = this.width; // Start with text scrolling in from right
+        this.position = 0; //this.width; // Start with text scrolling in from right
         if (!this.isRunning) {
             this.isRunning = true;
             //this.intervalId = setInterval(() => this.update(), this.scrollSpeed);
@@ -25,11 +25,11 @@ class PinballDisplay {
 
     // Stop the display
     stop() {
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
+        //if (this.intervalId) {
+            //clearInterval(this.intervalId);
             this.isRunning = false;
-            this.intervalId = null;
-        }
+            //this.intervalId = null;
+        //}
     }
 
     // Update display state
@@ -43,8 +43,9 @@ class PinballDisplay {
             }
             this.scrollTimer = 0;
 
-            this.position--;
+            //this.position--;
             //this.position = Math.floor(this.position - (dt*0.001));
+            this.position++;
             
             // Calculate visible portion of text
             let displayText = "";
@@ -62,8 +63,15 @@ class PinballDisplay {
             this.textToDraw = displayText;
 
             // Reset position when text has fully scrolled out
-            if (this.position + this.currentText.length < 0) {
+            /*if (this.position + this.currentText.length < 0) {
                 this.position = this.width;
+            }*/
+            /*if (this.position <= -this.currentText.length) {
+                this.position = this.width;
+            }*/
+
+            if (this.position > this.width) {
+                this.position = -this.currentText.length;
             }
         }
     }
@@ -97,9 +105,14 @@ class PinballDisplay {
     }
 
     // Change text without stopping animation
-    setText(newText) {
+    /*setText(newText) {
         this.currentText = newText.toUpperCase();
         this.position = this.width; // Reset position for new text
+    }*/
+
+    setText(newText) {
+        this.currentText = newText.toUpperCase();
+        this.position = -this.currentText.length; // Reset to off-screen left
     }
 }
 

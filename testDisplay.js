@@ -1,4 +1,4 @@
-const display = new PinballDisplay(15, 200); // 15 chars wide, 200ms speed
+const display = new PinballDisplay(20, 200); // 15 chars wide, 200ms speed
 
 function load() {
     context.font = '120px LED'; // monospace';
