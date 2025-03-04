@@ -38,12 +38,13 @@ class Object {
 }
 
 class Poly extends Object {
-    constructor(position, vertices, radius) {
+    constructor(position, vertices, radiusX, radiusY) {
         super(position, new Col4i(1.00, 1.00, 1.00));
         this._vertices = new Array(vertices).fill().map(() => new Vec2f());
-        this._radius = radius;
+        this._radiusX = radiusX;
+        this._radiusY = radiusY;
         this._omega = 0;
-        this._angle = 0;
+        this._angle = 0; //0.25 * Math.PI;
         this.update(0); // Initialize vertices positions
     }
 
@@ -59,11 +60,22 @@ class Poly extends Object {
             while (this._angle >= m_2pi) this._angle -= m_2pi;
             while (this._angle <= -m_2pi) this._angle += m_2pi;
 
-            this._vertices.forEach((vertex, index) => {
-                const angle = this._angle + (index * (m_2pi / this._vertices.length));
-                vertex.x = this._position.x + (this._radius * Math.cos(angle));
-                vertex.y = this._position.y + (this._radius * Math.sin(angle));
-            });
+
+            if (this._vertices.length == 4) {
+                // Calculate the positions of the four vertices
+                this._vertices[0] = new Vec2f(this._position.x - this._radiusX, this._position.y - this._radiusY); // Top-left
+                this._vertices[1] = new Vec2f(this._position.x + this._radiusX, this._position.y - this._radiusY); // Top-right
+                this._vertices[2] = new Vec2f(this._position.x + this._radiusX, this._position.y + this._radiusY); // Bottom-right
+                this._vertices[3] = new Vec2f(this._position.x - this._radiusX, this._position.y + this._radiusY); // Bottom-left
+            } else {
+                this._vertices.forEach((vertex, index) => {
+                    const angleX = this._angle + (index * (m_2pi / this._vertices.length)); // 0;
+                    const angleY = this._angle + (index * (m_2pi / this._vertices.length)); // 0.5 * Math.PI;
+                    vertex.x = this._position.x + (this._radiusX * Math.cos(angleX)); // + (this._radiusX * (1 - Math.cos(angleX)));
+                    vertex.y = this._position.y + (this._radiusY * Math.sin(angleY)); // + (this._radiusY * (1 - Math.sin(angleY)));
+                    //console.log(index);console.log(vertex.x);console.log(vertex.y);
+                });
+            }
         }
     }
 

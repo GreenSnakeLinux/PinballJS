@@ -1,7 +1,7 @@
 // Assuming these are defined in a globals.js or similar
 const Globals = {
     poly_vertices: 6,
-    poly_radius: 350.00, //100,
+    poly_radius: 50, //350.00, //100,
     poly_omega: 2.09, //0,
     poly_friction: 0, //0.1,
     poly_gravity: 0,
@@ -19,7 +19,7 @@ class BouncingBall {
     constructor(width, height) {
         this._title = "Bouncing Ball";
         this._canvas = null;
-        this._poly = null;
+        this._poly = []; //null;
         this._ball = null;
         this._size = new Vec2f();
         this._center = new Vec2f();
@@ -31,6 +31,7 @@ class BouncingBall {
         this.lastUpdate = Date.now();
 
         this.create_canvas(width, height);
+        this.create_rect(width, height);
         this.create_poly();
         this.create_ball();
         this.start();
@@ -42,11 +43,25 @@ class BouncingBall {
         this._center = this._size.mul(0.5);
     }
 
+    create_rect(width, height) {
+        let poly = new Poly(this._center, 4, width / 2, height / 2);
+        poly._frozen = true;
+        poly._omega = 0;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
+    }
+
     create_poly() {
-        this._poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius);
-        this._poly._omega = Globals.poly_omega;
-        this._poly._friction = new Vec2f(Globals.poly_friction, 0);
-        this._poly._gravity = new Vec2f(0, Globals.poly_gravity);
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(this._size.mul(0.75), Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
     }
 
     create_ball() {
@@ -70,12 +85,12 @@ class BouncingBall {
 
     set_poly_radius(poly_radius) {
         Globals.set_poly_radius(poly_radius);
-        this._poly._radius = Globals.poly_radius;
+        //this._poly._radius = Globals.poly_radius;
     }
 
     set_poly_omega(poly_omega) {
         Globals.set_poly_omega(poly_omega);
-        this._poly._omega = Globals.poly_omega;
+        //this._poly._omega = Globals.poly_omega;
     }
 
     set_ball_radius(ball_radius) {
@@ -90,14 +105,23 @@ class BouncingBall {
         const center = this._size.mul(0.5);
         const delta = center.sub(this._center);
         this._center = center;
-        this._poly._position = this._poly._position.add(delta);
+        //this._poly._position = this._poly._position.add(delta);
+        this._poly.forEach((item, index, array) => { //function (item, index, array) {
+            item._position = item._position.add(delta); // TODO To debug: Seems OK
+            //this._poly[index]._position = this._poly[index]._position.add(delta);
+        });
         this._ball._position = this._ball._position.add(delta);
     }
 
     update(dt) {
-        this._poly.update(dt);
+        //this._poly.update(dt);
         this._ball.update(dt);
-        this._ball.collide(this._poly);
+        //this._ball.collide(this._poly);
+
+        this._poly.forEach((item, index, array) => { //function (item, index, array) {
+            item.update(dt);
+            this._ball.collide(item);
+        });
     }
 
     render0() {
@@ -113,7 +137,10 @@ class BouncingBall {
         this._canvas.color(this._color);
         //this._canvas.clear();
         this._canvas.present();
-        this._poly.render(this._canvas);
+        this._poly.forEach((item, index, array) => { //function (item, index, array) {
+            item.render(this._canvas);
+        });
+        //this._poly.render(this._canvas);
         this._ball.render(this._canvas);
     }
 
@@ -196,13 +223,13 @@ class BouncingBall {
             case 'ArrowLeft':
                 {
                     const value = 1.5 * this._dtime;
-                    this.set_poly_omega(this._poly._omega - (mods ? 2.0 * value : value));
+                    //this.set_poly_omega(this._poly._omega - (mods ? 2.0 * value : value));
                 }
                 break;
             case 'ArrowRight':
                 {
                     const value = 1.5 * this._dtime;
-                    this.set_poly_omega(this._poly._omega + (mods ? 2.0 * value : value));
+                    //this.set_poly_omega(this._poly._omega + (mods ? 2.0 * value : value));
                 }
                 break;
 			default:
@@ -219,11 +246,11 @@ class BouncingBall {
                 this._ball._position = new Vec2f(event.offsetX, event.offsetY);
                 this._ball._velocity = new Vec2f(event.movementX * 50, event.movementY * 50);
                 this._ball._frozen = true;
-                this._poly._frozen = false;
+                //this._poly._frozen = false;
             } else {
-                this._poly._position = new Vec2f(event.offsetX, event.offsetY);
-                this._poly._velocity = new Vec2f(0, 0);
-                this._poly._frozen = false;
+                //this._poly._position = new Vec2f(event.offsetX, event.offsetY);
+                //this._poly._velocity = new Vec2f(0, 0);
+                //this._poly._frozen = false;
                 this._ball._frozen = false;
             }
         }
@@ -236,11 +263,11 @@ class BouncingBall {
                 this._ball._position = new Vec2f(event.offsetX, event.offsetY);
                 this._ball._velocity = new Vec2f(0, 0);
                 this._ball._frozen = true;
-                this._poly._frozen = false;
+                //this._poly._frozen = false;
             } else {
-                this._poly._position = new Vec2f(event.offsetX, event.offsetY);
-                this._poly._velocity = new Vec2f(0, 0);
-                this._poly._frozen = false;
+                //this._poly._position = new Vec2f(event.offsetX, event.offsetY);
+                //this._poly._velocity = new Vec2f(0, 0);
+                //this._poly._frozen = false;
                 this._ball._frozen = false;
             }
         }
@@ -248,7 +275,7 @@ class BouncingBall {
 
     on_mouse_button_release(event) {
         if (event.button === 0) { // Left button
-            this._poly._frozen = false;
+            //this._poly._frozen = false;
             this._ball._frozen = false;
         }
     }
@@ -258,10 +285,11 @@ class BouncingBall {
         if (mods) {
             this.set_ball_radius(this._ball._radius + (event.deltaY * 100 * this._dtime));
         } else {
-            this.set_poly_radius(this._poly._radius + (event.deltaY * 100 * this._dtime));
+            //this.set_poly_radius(this._poly._radius + (event.deltaY * 100 * this._dtime));
         }
     }
 }
 
 // Usage:
-const app = new BouncingBall(1920, 1080);
+//const app = new BouncingBall(1920, 1080);
+const app = new BouncingBall(300, 400);
