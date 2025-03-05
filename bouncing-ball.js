@@ -6,8 +6,8 @@ const Globals = {
     poly_friction: 0, //0.1,
     poly_gravity: 0,
     ball_radius: 20,
-    ball_friction: 0.25, //0.1,
-    ball_gravity: 98, //9806.65, //98,
+    ball_friction: 0.9, //0.25, //0.1,
+    ball_gravity: 980, //9806.65, //98,
     
     set_poly_vertices: (v) => { Globals.poly_vertices = Math.max(3, v); },
     set_poly_radius: (r) => { Globals.poly_radius = Math.max(10, r); },
@@ -31,9 +31,12 @@ class BouncingBall {
         this.lastUpdate = Date.now();
 
         this.create_canvas(width, height);
-        this.create_rect(width, height);
-        this.create_poly();
-        this.create_ball();
+        this.create_rect(width, height); // Pinball edges
+        this.create_poly(width, height); // Bumper 1
+        this.create_poly2(width, height); // Bumper 2
+        this.create_ramp(width, height); // Ramp
+        //this.create_anti_return(width, height); // Ball anti-return on top of ramp => TODO Display only when ball is out of ramp
+        this.create_ball(width, height);
         this.start();
     }
 
@@ -53,9 +56,28 @@ class BouncingBall {
         this._poly.push(poly);
     }
 
-    create_poly() {
+    create_ramp(width, height) { // Ramp
+        //let line = new Line(new Vec2f(width-((Globals.ball_radius + 1) * 2), height), new Vec2f(width-((Globals.ball_radius + 1) * 2), height * 1 / 4));
+        let line = new Line(new Vec2f(width-(Globals.ball_radius * 2), height), new Vec2f(width-(Globals.ball_radius * 2), height * 1 / 4));
+        line._frozen = true;
+        line._friction = new Vec2f(Globals.poly_friction, 0);
+        line._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(line);
+    }
+
+    create_anti_return(width, height) { // Anti return
+        let line = new Line(new Vec2f(width - (Globals.ball_radius * 2), height * 1 / 4), new Vec2f(width, (height * 1 / 4) - (Globals.ball_radius * 2)));
+        line._frozen = true;
+        line._friction = new Vec2f(Globals.poly_friction, 0);
+        line._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(line);
+    }
+
+    create_poly(width, height) {
         //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
-        let poly = new Poly(this._size.mul(0.75), Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f(width*3/4 - (Globals.ball_radius) * 2, height*1/4), Globals.poly_vertices, 30, 30); // Globals.poly_radius, Globals.poly_radius);
         poly._frozen = true;
         poly._omega = Globals.poly_omega;
         poly._friction = new Vec2f(Globals.poly_friction, 0);
@@ -64,8 +86,20 @@ class BouncingBall {
         this._poly.push(poly);
     }
 
-    create_ball() {
-        this._ball = new Ball(this._center, Globals.ball_radius);
+    create_poly2(width, height) {
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f((Globals.ball_radius) * 2, height*1/4), Globals.poly_vertices, 30, 30); // Globals.poly_radius, Globals.poly_radius);
+        poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
+    }
+
+    create_ball(width, height) {
+        //this._ball = new Ball(this._center, Globals.ball_radius);
+        this._ball = new Ball(new Vec2f(width-Globals.ball_radius, this._center.y), Globals.ball_radius);
         this._ball._friction = new Vec2f(Globals.ball_friction, Globals.ball_friction);
         this._ball._gravity = new Vec2f(0, Globals.ball_gravity);
     }
@@ -129,8 +163,8 @@ class BouncingBall {
         this._canvas.color(color);
         this._canvas.present();
         //this._canvas.circle(200, 200, 100);
-		//this._ball.render(this._canvas);
-		this._canvas.circle(Math.floor(this._center.x), Math.floor(this._center.y), Globals.ball_radius);
+        //this._ball.render(this._canvas);
+        this._canvas.circle(Math.floor(this._center.x), Math.floor(this._center.y), Globals.ball_radius);
     }
 
     render() {
@@ -207,18 +241,19 @@ class BouncingBall {
                 this.toggle_underlay();
                 break;
             case 'r':
-                this.create_poly();
-                this.create_ball();
+                //this.create_poly();
+                //this.create_ball();
                 break;
             case 'q':
             case 'Escape':
                 this.quit();
                 break;
             case 'ArrowUp':
-                this.set_poly_vertices(Globals.poly_vertices + 1);
+                //this.set_poly_vertices(Globals.poly_vertices + 1);
                 break;
             case 'ArrowDown':
-                this.set_poly_vertices(Globals.poly_vertices - 1);
+                //this.set_poly_vertices(Globals.poly_vertices - 1);
+                // TODO Compress spring to launch ball in ramp
                 break;
             case 'ArrowLeft':
                 {

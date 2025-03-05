@@ -37,6 +37,54 @@ class Object {
     }
 }
 
+class Line extends Object {
+    constructor(positionStart, positionEnd) {
+        super(positionStart, new Col4i(1.00, 1.00, 1.00));
+        this._vertices = new Array(2).fill().map(() => new Vec2f());
+        this._positionEnd = positionEnd;
+        this._omega = 0;
+        this._angle = 0;
+        this.update(0); // Initialize vertices positions
+    }
+
+    update(dt) {
+        const m_2pi = 2 * Math.PI;
+
+        if (!this._frozen) {
+            this._velocity = this._velocity.add(this._gravity.mul(dt));
+            this._position = this._position.add(this._velocity.mul(dt));
+            this._velocity = this._velocity.mul((new Vec2f(1, 1).sub(this._friction.mul(dt))).x);
+            this._angle += this._omega * dt;
+            
+            while (this._angle >= m_2pi) this._angle -= m_2pi;
+            while (this._angle <= -m_2pi) this._angle += m_2pi;
+
+            this._vertices[0] = new Vec2f(this._position.x, this._position.y); // Bottom
+            this._vertices[1] = new Vec2f(this._positionEnd.x, this._positionEnd.y); // Top
+        }
+    }
+
+    render(canvas) {
+        canvas.color(this._color);
+        let prev = this._vertices[this._vertices.length - 1];
+        for (const vertex of this._vertices) {
+            canvas.line(Math.floor(prev.x), Math.floor(prev.y), 
+                       Math.floor(vertex.x), Math.floor(vertex.y));
+            prev = vertex;
+        }
+    }
+
+    // Iterator to allow for-of loops
+    *[Symbol.iterator]() {
+        yield* this._vertices;
+    }
+
+    // For rbegin() equivalent
+    rbegin() {
+        return this._vertices[this._vertices.length - 1];
+    }
+}
+
 class Poly extends Object {
     constructor(position, vertices, radiusX, radiusY) {
         super(position, new Col4i(1.00, 1.00, 1.00));
@@ -111,7 +159,7 @@ class Ball extends Object {
             this._velocity = this._velocity.add(this._gravity.mul(dt));
             this._position = this._position.add(this._velocity.mul(dt));
             this._velocity = this._velocity.mul(((new Vec2f(1, 1)).sub(this._friction.mul(dt))).x);
-			//console.log("this._velocity: " + this._velocity.x + " / " + this._velocity.y);
+            //console.log("this._velocity: " + this._velocity.x + " / " + this._velocity.y);
         }
     }
 
