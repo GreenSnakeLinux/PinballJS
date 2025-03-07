@@ -15,6 +15,15 @@ const Globals = {
     set_ball_radius: (r) => { Globals.ball_radius = Math.max(5, r); }
 };
 
+const Elements = {
+  Edges: 0,
+  Bumper1: 1,
+  Bumper2: 2,
+  Ramp: 3,
+  Spring: 4,
+  AntiReturn: 5
+};
+
 class BouncingBall {
     constructor(width, height) {
         this._title = "Bouncing Ball";
@@ -26,6 +35,8 @@ class BouncingBall {
         this._color = new Col4i(0.12, 0.12, 0.12);
         this._dtime = 0.016; // Fixed timestep (approx 60fps)
         this._running = false;
+        this.arrowDown = false;
+        this.arrowDownRelease = false;
 
         //this.interval;
         this.lastUpdate = Date.now();
@@ -35,6 +46,7 @@ class BouncingBall {
         this.create_poly(width, height); // Bumper 1
         this.create_poly2(width, height); // Bumper 2
         this.create_ramp(width, height); // Ramp
+        this.create_spring(width, height); // Spring
         //this.create_anti_return(width, height); // Ball anti-return on top of ramp => TODO Display only when ball is out of ramp
         this.create_ball(width, height);
         this.start();
@@ -57,22 +69,30 @@ class BouncingBall {
     }
 
     create_ramp(width, height) { // Ramp
-        //let line = new Line(new Vec2f(width-((Globals.ball_radius + 1) * 2), height), new Vec2f(width-((Globals.ball_radius + 1) * 2), height * 1 / 4));
-        let line = new Line(new Vec2f(width-(Globals.ball_radius * 2), height), new Vec2f(width-(Globals.ball_radius * 2), height * 1 / 4));
-        line._frozen = true;
-        line._friction = new Vec2f(Globals.poly_friction, 0);
-        line._gravity = new Vec2f(0, Globals.poly_gravity);
+        let ramp = new Poly(new Vec2f(width - Globals.ball_radius, height), 4, Globals.ball_radius, height * 3 / 4);
+        ramp._frozen = true;
+        ramp._friction = new Vec2f(Globals.poly_friction, 0);
+        ramp._gravity = new Vec2f(0, Globals.poly_gravity);
 
-        this._poly.push(line);
+        this._poly.push(ramp);
     }
 
     create_anti_return(width, height) { // Anti return
-        let line = new Line(new Vec2f(width - (Globals.ball_radius * 2), height * 1 / 4), new Vec2f(width, (height * 1 / 4) - (Globals.ball_radius * 2)));
-        line._frozen = true;
-        line._friction = new Vec2f(Globals.poly_friction, 0);
-        line._gravity = new Vec2f(0, Globals.poly_gravity);
+        let anti_return = new Line(new Vec2f(width - (Globals.ball_radius * 2), height * 1 / 4), new Vec2f(width, (height * 1 / 4) - (Globals.ball_radius * 2)));
+        anti_return._frozen = true;
+        anti_return._friction = new Vec2f(Globals.poly_friction, 0);
+        anti_return._gravity = new Vec2f(0, Globals.poly_gravity);
 
-        this._poly.push(line);
+        this._poly.push(anti_return);
+    }
+
+    create_spring(width, height) { // Spring
+        let spring = new Poly(new Vec2f(width - Globals.ball_radius, height), 4, 4, Globals.ball_radius * 4);
+        spring._frozen = true;
+        spring._friction = new Vec2f(Globals.poly_friction, 0);
+        spring._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(spring);
     }
 
     create_poly(width, height) {
@@ -156,6 +176,38 @@ class BouncingBall {
             item.update(dt);
             this._ball.collide(item);
         });
+
+        if(this.arrowDown) {
+            this.arrowDown = false;
+            let spring = this._poly[Elements.Spring];
+            if(spring._radiusY > 0) {
+                spring._radiusY -= dt*100*4; //4;
+                spring.updateVertices();
+            } else if(spring._radiusY != 0) {
+                spring._radiusY = 0;
+                spring.updateVertices();
+            }
+        }
+
+        if(this.arrowDownRelease) {
+            let spring = this._poly[Elements.Spring];
+            if( spring._radiusY < Globals.ball_radius * 4) {
+                spring._omega = 2.09; // TODO play with value
+                spring._friction = 0; // TODO play with value
+                spring._radiusY += dt*100*4; //4;
+                spring.updateVertices();
+            } else if( spring._radiusY != Globals.ball_radius * 4) {
+                spring._omega = Globals.poly_omega;
+                spring._friction = Globals.poly_friction; // Reset value to default
+                spring._radiusY = Globals.ball_radius * 4; // Reset value to default
+                spring.updateVertices();
+                this.arrowDownRelease = false;
+            } else {
+                spring._omega = Globals.poly_omega; // Reset value to default
+                spring._friction = Globals.poly_friction; // Reset value to default
+                this.arrowDownRelease = false;
+            }
+        }
     }
 
     render0() {
@@ -201,8 +253,13 @@ class BouncingBall {
         });
 
         document.addEventListener('keydown', (event) => {
-			event.preventDefault();
+            event.preventDefault();
             this.on_key_press(event);
+        });
+
+        document.addEventListener('keyup', (event) => {
+            event.preventDefault();
+            this.on_keyup_press(event);
         });
 
         this._canvas._canvas.addEventListener('mousemove', (event) => {
@@ -253,7 +310,8 @@ class BouncingBall {
                 break;
             case 'ArrowDown':
                 //this.set_poly_vertices(Globals.poly_vertices - 1);
-                // TODO Compress spring to launch ball in ramp
+                // Compress spring to launch ball in ramp
+                this.arrowDown = true;
                 break;
             case 'ArrowLeft':
                 {
@@ -267,10 +325,19 @@ class BouncingBall {
                     //this.set_poly_omega(this._poly._omega + (mods ? 2.0 * value : value));
                 }
                 break;
-			default:
-				// Show key pressed value
-				//console.log(event.key);
-				break;
+            default:
+                // Show key pressed value
+                //console.log(event.key);
+                break;
+        }
+    }
+
+    on_keyup_press(event) {
+        switch (event.key) {
+            case 'ArrowDown':
+                // Release spring to launch ball in ramp
+                this.arrowDownRelease = true;
+                break;
         }
     }
 

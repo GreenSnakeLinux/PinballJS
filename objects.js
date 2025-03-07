@@ -59,8 +59,8 @@ class Line extends Object {
             while (this._angle >= m_2pi) this._angle -= m_2pi;
             while (this._angle <= -m_2pi) this._angle += m_2pi;
 
-            this._vertices[0] = new Vec2f(this._position.x, this._position.y); // Bottom
-            this._vertices[1] = new Vec2f(this._positionEnd.x, this._positionEnd.y); // Top
+            this._vertices[0] = new Vec2f(this._position.x, this._position.y); // Bottom left
+            this._vertices[1] = new Vec2f(this._positionEnd.x, this._positionEnd.y); // Top right
         }
     }
 
@@ -96,6 +96,24 @@ class Poly extends Object {
         this.update(0); // Initialize vertices positions
     }
 
+    updateVertices() {
+        if (this._vertices.length == 4) {
+            // Calculate the positions of the four vertices
+            this._vertices[0] = new Vec2f(this._position.x - this._radiusX, this._position.y - this._radiusY); // Top-left
+            this._vertices[1] = new Vec2f(this._position.x + this._radiusX, this._position.y - this._radiusY); // Top-right
+            this._vertices[2] = new Vec2f(this._position.x + this._radiusX, this._position.y + this._radiusY); // Bottom-right
+            this._vertices[3] = new Vec2f(this._position.x - this._radiusX, this._position.y + this._radiusY); // Bottom-left
+        } else {
+            const m_2pi = 2 * Math.PI;
+            this._vertices.forEach((vertex, index) => {
+                const angleX = this._angle + (index * (m_2pi / this._vertices.length));
+                const angleY = this._angle + (index * (m_2pi / this._vertices.length));
+                vertex.x = this._position.x + (this._radiusX * Math.cos(angleX)); // + (this._radiusX * (1 - Math.cos(angleX)));
+                vertex.y = this._position.y + (this._radiusY * Math.sin(angleY)); // + (this._radiusY * (1 - Math.sin(angleY)));
+            });
+        }
+    }
+
     update(dt) {
         const m_2pi = 2 * Math.PI;
 
@@ -108,22 +126,7 @@ class Poly extends Object {
             while (this._angle >= m_2pi) this._angle -= m_2pi;
             while (this._angle <= -m_2pi) this._angle += m_2pi;
 
-
-            if (this._vertices.length == 4) {
-                // Calculate the positions of the four vertices
-                this._vertices[0] = new Vec2f(this._position.x - this._radiusX, this._position.y - this._radiusY); // Top-left
-                this._vertices[1] = new Vec2f(this._position.x + this._radiusX, this._position.y - this._radiusY); // Top-right
-                this._vertices[2] = new Vec2f(this._position.x + this._radiusX, this._position.y + this._radiusY); // Bottom-right
-                this._vertices[3] = new Vec2f(this._position.x - this._radiusX, this._position.y + this._radiusY); // Bottom-left
-            } else {
-                this._vertices.forEach((vertex, index) => {
-                    const angleX = this._angle + (index * (m_2pi / this._vertices.length)); // 0;
-                    const angleY = this._angle + (index * (m_2pi / this._vertices.length)); // 0.5 * Math.PI;
-                    vertex.x = this._position.x + (this._radiusX * Math.cos(angleX)); // + (this._radiusX * (1 - Math.cos(angleX)));
-                    vertex.y = this._position.y + (this._radiusY * Math.sin(angleY)); // + (this._radiusY * (1 - Math.sin(angleY)));
-                    //console.log(index);console.log(vertex.x);console.log(vertex.y);
-                });
-            }
+            this.updateVertices();
         }
     }
 
