@@ -97,7 +97,18 @@ class Poly extends Object {
     }
 
     updateVertices() {
-        if (this._vertices.length == 4) {
+        if (this._vertices.length == 3) {
+            // Calculate the positions of the three vertices
+            if(this._angle == 0) {
+                this._vertices[0] = new Vec2f(this._position.x, this._position.y); // Vertex A (bottom-left, right angle)
+                this._vertices[1] = new Vec2f(this._position.x + this._radiusX, this._position.y); // Vertex B (bottom-right)
+                this._vertices[2] = new Vec2f(this._position.x, this._position.y - this._radiusY); // Vertex C (top-left)
+            } else if(this._angle == Math.PI) {
+                this._vertices[0] = new Vec2f(this._position.x, this._position.y); // Vertex A (bottom-left, right angle)
+                this._vertices[1] = new Vec2f(this._position.x - this._radiusX, this._position.y); // Vertex B (bottom-right)
+                this._vertices[2] = new Vec2f(this._position.x, this._position.y - this._radiusY); // Vertex C (top-left)
+            }
+        } else if (this._vertices.length == 4 && this._angle == 0) {
             // Calculate the positions of the four vertices
             this._vertices[0] = new Vec2f(this._position.x - this._radiusX, this._position.y - this._radiusY); // Top-left
             this._vertices[1] = new Vec2f(this._position.x + this._radiusX, this._position.y - this._radiusY); // Top-right
@@ -207,7 +218,7 @@ class Ball extends Object {
     }
 
     reflect(v, n) {
-        // Reflection: v - 2 * (v · n) * n
+        // Reflection: v - 2 * (v ï¿½ n) * n
         const dot = v.dot(n);
         return v.sub(n.mul(2 * dot));
     }

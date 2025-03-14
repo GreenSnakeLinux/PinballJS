@@ -21,7 +21,10 @@ const Elements = {
   Bumper2: 2,
   Ramp: 3,
   Spring: 4,
-  AntiReturn: 5
+  //AntiReturn: 5,
+  Triangle1: 5,
+  Triangle2: 6,
+  Circle: 7
 };
 
 class BouncingBall {
@@ -48,6 +51,10 @@ class BouncingBall {
         this.create_ramp(width, height); // Ramp
         this.create_spring(width, height); // Spring
         //this.create_anti_return(width, height); // Ball anti-return on top of ramp => TODO Display only when ball is out of ramp
+        this.create_triangle(width, height); // Triangle bottom left
+        this.create_triangle2(width, height); // Triangle bottom right
+        this.create_round(width, height); // Circle in middle passage
+        this.create_rectangle(width, height); // 
         this.create_ball(width, height);
         this.start();
     }
@@ -95,10 +102,45 @@ class BouncingBall {
         this._poly.push(spring);
     }
 
+    create_triangle(width, height) {
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f(0, height), 3, Globals.ball_radius * 4, Globals.ball_radius * 2); // Globals.poly_radius, Globals.poly_radius);
+        poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
+    }
+
+    create_triangle2(width, height) {
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f(width - Globals.ball_radius * 2, height), 3, Globals.ball_radius * 4, Globals.ball_radius * 2); // Globals.poly_radius, Globals.poly_radius);
+        poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+        poly._angle = Math.PI;
+        poly.updateVertices();
+
+        this._poly.push(poly);
+    }
+
+    create_round(width, height) {
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f((width - Globals.ball_radius) / 2 - (Globals.ball_radius / 6), height - Globals.ball_radius / 3), 24, Globals.ball_radius / 3, Globals.ball_radius / 3); // Globals.poly_radius, Globals.poly_radius);
+        poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
+    }
+
     create_poly(width, height) {
         //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
         let poly = new Poly(new Vec2f(width*3/4 - (Globals.ball_radius) * 2, height*1/4), Globals.poly_vertices, 30, 30); // Globals.poly_radius, Globals.poly_radius);
-        poly._frozen = true;
+        //poly._frozen = true;
         poly._omega = Globals.poly_omega;
         poly._friction = new Vec2f(Globals.poly_friction, 0);
         poly._gravity = new Vec2f(0, Globals.poly_gravity);
@@ -109,10 +151,23 @@ class BouncingBall {
     create_poly2(width, height) {
         //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
         let poly = new Poly(new Vec2f((Globals.ball_radius) * 2, height*1/4), Globals.poly_vertices, 30, 30); // Globals.poly_radius, Globals.poly_radius);
+        //poly._frozen = true;
+        poly._omega = Globals.poly_omega;
+        poly._friction = new Vec2f(Globals.poly_friction, 0);
+        poly._gravity = new Vec2f(0, Globals.poly_gravity);
+
+        this._poly.push(poly);
+    }
+
+    create_rectangle(width, height) {
+        //let poly = new Poly(this._center, Globals.poly_vertices, Globals.poly_radius, Globals.poly_radius);
+        let poly = new Poly(new Vec2f((Globals.ball_radius) * 2, height*3/4), 4, Globals.poly_radius / 2, Globals.poly_radius / 4);
+        poly._angle = Math.PI;
         poly._frozen = true;
         poly._omega = Globals.poly_omega;
         poly._friction = new Vec2f(Globals.poly_friction, 0);
         poly._gravity = new Vec2f(0, Globals.poly_gravity);
+        poly.updateVertices();
 
         this._poly.push(poly);
     }
